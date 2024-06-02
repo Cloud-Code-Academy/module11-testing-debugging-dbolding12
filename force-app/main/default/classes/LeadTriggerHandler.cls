@@ -30,22 +30,49 @@ public with sharing class LeadTriggerHandler {
 	 * - If the title contains terms like 'assist', 'deputy', or 'jr',
 	 *   change the title to 'Assistant'.
 	 */
-	public static void handleTitleNormalization(List<Lead> leadsToNormalize) {
+	private Boolean m_isExecuting = false;
+	private integer BatchSize = 0;
+
+	public LeadTriggerHandler(boolean isExecuting, integer size) {
+		m_isExecuting = isExecuting;
+		BatchSize = size;
+	}
+
+	public void handleTitleNormalization(List<Lead> leadsToNormalize) {		
+		
 		for (Lead ld : leadsToNormalize) {
-			if (ld.title == 'vp' || ld.title.contains('v.p.') || ld.title.contains('vice president')) {
-				ld.Title = 'Vice President';
-			} else if (
-				ld.title.contains('mgr') ||
-				ld.title.contains('manage') ||
-				ld.title.contains('head of department')
+			if (ld.Title == null  ) {
+
+				continue;
+				
+			} else if (ld.title.containsIgnoreCase('vp') || 
+				ld.title.containsIgnoreCase('v.p.') || 
+				ld.title.containsIgnoreCase('vice president')) {
+
+					ld.Title = 'Vice President';
+
+			} else if (ld.title.containsIgnoreCase('mgr') ||
+				  ld.title.containsIgnoreCase('manage') ||
+				  ld.title.containsIgnoreCase('ead of department')
 			) {
-				ld.Title = 'Manager';
-			} else if (ld.title.contains('exec') || ld.title == 'chief' || ld.title.contains('head')) {
-				ld.Title = 'Executive';
-			} else if (ld.title.contains('assist') || ld.title.contains('deputy') || ld.title == 'jr') {
-				ld.Title = 'Assistant';
+					ld.Title = 'Manager';
+
+			} else if (ld.title.containsIgnoreCase('exec') || 
+				  ld.title.containsIgnoreCase('chief') ||
+				  ld.title.containsIgnoreCase('head')) {
+
+					ld.Title = 'Executive';
+
+			} else if (ld.title.containsIgnoreCase('assist') || 
+				  ld.title.containsIgnoreCase('deputy') || 
+				  ld.title.containsIgnoreCase('jr')) {
+
+					ld.Title = 'Assistant';
+
 			}
-		}
+			System.debug(ld.Title);
+		}		
+		
 	}
 
 	/* 
@@ -59,24 +86,21 @@ public with sharing class LeadTriggerHandler {
 	 * - If the lead provides a phone number, increment score by 5 points.
 	 * - If the lead belongs to the 'Technology' industry, increment score by another 10 points.
 	 */
-	public static void handleAutoLeadScoring(List<Lead> leadsToScore) {
+	public void handleAutoLeadScoring(List<Lead> leadsToScore) {
 		for (Lead ld : leadsToScore) {
-			Integer score = 10;
+			Integer score = 0;
 
 			// Check and add points based on the specified conditions
-			if (ld.LeadSource == 'Website' && ld.Email != null) {
-				score = 3;
-			}
-
-			if (ld.Phone != null) {
-				score = 5;
-			}
-
-			if (ld.Industry == 'Technology') {
-				score = 10;
+			if (ld.LeadSource == 'Web' && ld.Email != null) {
+				score += 3;
+			} if (ld.Phone != null) {
+				score += 5;
+			} if (ld.Industry == 'Technology') {
+				score += 10;
 			}
 
 			ld.Lead_Score__c = score; // Set the computed score back to the lead
+			System.debug(ld.Lead_Score__c);
 		}
 	}
 
@@ -103,11 +127,16 @@ public with sharing class LeadTriggerHandler {
 	 * - One of the errors is recursion related. Check if the lead is already converted or check if the email has changed/is null
 	 * - One of the errors is map related. Make sure you are using the correct contact map key
 	 */
-	public static void handleLeadAutoConvert(List<Lead> leads) {
+	public void handleLeadAutoConvert(List<Lead> leads) {
 		// Step 1: Gather all lead emails
         Map<Id,String> leadToEmailMap = new Map<Id,String>();
 		for (Lead lead : leads) {
-			leadToEmailMap.put(lead.Id, lead.Email);
+			if (!lead.IsConverted && lead.email != null ){
+
+				leadToEmailMap.put(lead.Id, lead.Email);
+
+			}
+			
 		}
 
 		// Step 2: Find matching contacts based on email
