@@ -70,7 +70,7 @@ public with sharing class LeadTriggerHandler {
 					ld.Title = 'Assistant';
 
 			}
-			System.debug(ld.Title);
+			
 		}		
 		
 	}
@@ -100,7 +100,7 @@ public with sharing class LeadTriggerHandler {
 			}
 
 			ld.Lead_Score__c = score; // Set the computed score back to the lead
-			System.debug(ld.Lead_Score__c);
+			
 		}
 	}
 
