@@ -131,7 +131,7 @@ public with sharing class LeadTriggerHandler {
 		// Step 1: Gather all lead emails
         Map<Id,String> leadToEmailMap = new Map<Id,String>();
 		for (Lead lead : leads) {
-			if (!lead.IsConverted && lead.email != null ){
+			if (lead.IsConverted == false && lead.email != null ){
 
 				leadToEmailMap.put(lead.Id, lead.Email);
 

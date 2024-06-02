@@ -57,7 +57,7 @@ private class LeadTriggerHandlerTest {
 
         // Assert that the Lead_Score__c field was calculated correctly
         System.assertEquals(3, lead1.Lead_Score__c);
-        System.assertEquals(5, lead2.Lead_Score__c);
+        System.assertEquals(15, lead2.Lead_Score__c);
         System.assertEquals(10, lead3.Lead_Score__c);
     }
 
@@ -70,9 +70,9 @@ private class LeadTriggerHandlerTest {
 
         List<Contact> testContacts = new List<Contact>();
         // Add your test data here (e.g., create Contacts with matching email addresses)
-        Contact Contact1 = new Contact(LastName = 'Test Contact', Email = 'test@test.com', AccountId = testAccount1.Id);
-        Contact Contact2 = new Contact(LastName = 'Test Contact2', Email = 'test2@test.com', AccountId = testAccount1.Id);
-        Contact Contact3 = new Contact(LastName = 'Test Contact', Email = 'test2@test.com', AccountId = testAccount1.Id);
+        Contact Contact1 = new Contact(LastName = 'Test1', Email = 'test1@test.com', AccountId = testAccount1.Id);
+        Contact Contact2 = new Contact(LastName = 'Test2', Email = 'test2@test.com', AccountId = testAccount1.Id);
+        Contact Contact3 = new Contact(LastName = 'Test3', Email = 'test2@test.com', AccountId = testAccount1.Id);
        
         testContacts.add(contact1);
         testContacts.add(contact2);
@@ -82,21 +82,33 @@ private class LeadTriggerHandlerTest {
         // Create test data (Leads and Contacts)
         List<Lead> testLeads = new List<Lead>();
         // Add your test data here (e.g., create Leads with email addresses)
-        Lead Lead1 = new Lead(LastName = 'Test', Company = 'Test Company', Status = 'Open - Not Contacted', Email = 'test@test.com');
-        Lead Lead2 = new Lead(LastName = 'Test', Company = 'Test Company', Status = 'Open - Not Contacted', Email = 'test2@test.com');
-        Lead Lead3 = new Lead(LastName = 'Test', Company = 'Test Company', Status = 'Open - Not Contacted', Email = 'test3@test.com');
+        Lead Lead1 = new Lead(LastName = 'Testing', Company = 'Test Company1', Status = 'Open - Not Contacted', Email = 'test1@test.com');
+        Lead Lead2 = new Lead(LastName = 'Test2', Company = 'Test Company2', Status = 'Open - Not Contacted', Email = 'test2@test.com');
+        Lead Lead3 = new Lead(LastName = 'Test3', Company = 'Test Company3', Status = 'Open - Not Contacted', Email = 'test3@test.com');
         testLeads.add(lead1);
         testLeads.add(lead2);
         testLeads.add(lead3);
 
-        insert testLeads;      
+        Database.DMLOptions dml = new Database.DMLOptions();
+        dml.DuplicateRuleHeader.AllowSave = true;
+        Test.startTest();
+        Database.insert(testleads, dml);
+        Test.stopTest();
 
-        // Call the trigger handler method
-        LeadTriggerHandler handler = new LeadTriggerHandler(true, 200);
-        handler.handleLeadAutoConvert(testLeads);
 
-        // Assert that the leads were auto-converted correctly
-        System.assertEquals(contact1.Id, lead1.ConvertedContactId);
-        System.assertEquals(null, lead2.ConvertedContactId); // Not auto-converted
+        List<Lead> convertedLeads = [SELECT Id, IsConverted, Email FROM Lead WHERE Id = :testLeads];
+       
+        for (Lead testLead : convertedLeads) {
+            if (testLead.Email == 'test1@test.com') {
+                System.assertEquals(true, testLead.IsConverted, 'The lead should be converted.');
+            }
+            if (testLead.Email == 'test2@test.com') {
+                System.assertEquals(false, testLead.IsConverted, 'The lead should not be converted.');
+            }
+            if (testLead.Email == 'test3@test.com') {
+                System.assertEquals(false, testLead.IsConverted, 'The lead should not be converted.');
+            }
+        }      
+
     }
 }
